@@ -7,18 +7,11 @@ local CMD_FIRE		= 5
 local CMD_SHIELD	= 6
 local CMD_MINE		= 7
 local CMD_DESTROY	= 8
-local CMD_TURNANGLE	= 9
-local CMD_CLOAK		= 10
-
 
 local RobotGUID = 0
 
 function EstablishLink(ID)
 	RobotGUID = ID
-end
-
-function Fire()
-	_PerformAction(RobotGUID, CMD_FIRE)
 end
 
 function MoveForward()
@@ -37,10 +30,6 @@ function TurnRight()
 	_PerformAction(RobotGUID, CMD_TURNRIGHT)
 end
 
-function TurnToAngle(a)
-	_PerformAction(RobotGUID, CMD_TURNANGLE, a)
-end
-
 function ActivateShield()
 	_PerformAction(RobotGUID, CMD_SHIELD)
 end
@@ -53,58 +42,24 @@ function GetRadar()
 	return _ReadSensors(RobotGUID, 1)
 end
 
-function GetMap()
-	return _ReadSensors(RobotGUID, 2)
-end
-
-function GetStatus()
-	return _ReadSensors(RobotGUID, 3)
-end
-
-function GetGame()
-	return _ReadSensors(RobotGUID, 4)
-end
-
 -- All above here will be hidden to keep script simple
 
 -- Name your bot
 function IdentifyYourself()
-	return "javidx9"
+	return "nullbot"
 end
 
 
 -- Equivalent of main loop
 function Update()
+	
 	-- Check Walls
- 	--n, e, s, w = GetWalls()
-	--if n < 20.0 then		
-	--	TurnRight()
-	--	MoveBackward()
-	--	TurnRight()
-	--else
-	--	MoveForward()
-	--end
-	
-	-- Check Enemy Locality
- 	--n, e, s, w = GetRadar()
-	--if n < 20.0 then
-	--	ActivateShield()
-	--end
-
-	--if s < 20.0 then
-	--	ActivateShield()
-	--end
-
-	map = GetMap()
-	
-	me = GetStatus()
-
-
-		TurnToAngle(math.atan2(map[1].y-me.y, map[1].x-me.x))
+ 	n, e, s, w = GetWalls()
+	if n < 20.0 then		
+		TurnRight()
+		MoveBackward()
+		TurnRight()
+	else
 		MoveForward()
-		Fire()
-		Fire()
-		Fire()
-
-
+	end
 end

@@ -774,7 +774,7 @@ public:
 		}
 	}
 
-	void DrawWireFrameModel(const vector<pair<float, float>> &vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, short col = FG_WHITE)
+	void DrawWireFrameModel(const vector<pair<float, float>> &vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, short col = FG_WHITE, wchar_t c = PIXEL_SOLID)
 	{
 		// pair.first = x coordinate
 		// pair.second = y coordinate
@@ -810,7 +810,7 @@ public:
 		{
 			int j = (i + 1);
 			DrawLine((int)vecTransformedCoordinates[i % verts].first, (int)vecTransformedCoordinates[i % verts].second,
-				(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, PIXEL_SOLID, col);
+				(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, c, col);
 		}
 	}
 
@@ -1067,6 +1067,9 @@ protected:
 	static mutex m_muxGame;
 };
 
+#ifndef STATIC_IONITS_FOR_OLC
+#define STATIC_IONITS_FOR_OLC
 atomic<bool> olcConsoleGameEngine::m_bAtomActive(false);
 condition_variable olcConsoleGameEngine::m_cvGameFinished;
 mutex olcConsoleGameEngine::m_muxGame;
+#endif

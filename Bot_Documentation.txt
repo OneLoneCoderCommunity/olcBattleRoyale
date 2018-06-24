@@ -1,0 +1,133 @@
+OneLoneCoder Battle Royale Engine
+User BOT Documentation
+
+Movement Commands
+~~~~~~~~~~~~~~~~~
+
+Your bot can only move along the line it is facing. Your bot can rotate
+to face different directions. The world uses a coordinate system where
+0 degrees is along the X+ axis. Two fixed parameters [MoveSpeed] and
+[TurnSpeed] affect the motion of your bot. You have no control over the
+value of these variables
+
+MoveForwards()		Move bot forward at [MoveSpeed] for 1 second. Collisions
+					with walls will prohibit bot.
+
+MoveBackwards()		Move bot backward at [MoveSpeed] for 1 second. Collisions
+					with walls will prohibit bot.
+					
+TurnLeft()			Rotate bot CCW at [TurnSpeed] 45 degrees.
+
+TurnRight()			Rotate bot CW at [TurnSpeed] 45 degrees.
+
+TurnToAngle(a)		Rotate bot via shortest route at [Turnspeed] to face
+					angle 'a' in radians.
+					
+					
+				
+Action Commands
+~~~~~~~~~~~~~~~
+
+Your bot is capable of a variety of actions. Some take time to complete, others
+last for a specified duration.
+
+Fire()				Fire a bullet in the direction you are facing. You can
+					only fire bullets every 0.5 seconds. Bullets do 1 HP of
+					damage.
+					
+Cloak()				Become invisible to other bots. You have a limited number
+					of cloak activations. Each cloak lasts for 10.0 seconds.
+					
+Shield()			Become invincible. You have a limited number of shield
+					deployments. Each deployment lasts for 10.0 seconds.
+					
+Mine()				Drop a mine. You have a limited number of mines. You cannot
+					activate mines you have dropped. Mines do 3 HP of damage.
+					
+SelfDestruct()		Blow yourself up. This is terminal for the bot, but the
+					detonation of your bot releases 50 bullets evenly spread
+					around the bot.
+				
+						
+Signalling Commands
+~~~~~~~~~~~~~~~~~~~
+
+In team events, you can communicate with bots on your team using a
+simple semaphore signalling system. Enemy bots cannot detect these
+signals.
+
+ActivateFlag(n)		This will activate beacon n [1..10]. Other bots running
+					your script can detect this and change their behaviour.
+					
+DeactivateFlag(n)	This will deactivate beacon n [1..10].
+
+DetectFlag(n)		This will return TRUE if another bot running your script
+					has activated beacon n [1..10], otherwise false. You can
+					use this to change your bots behaviour accordingly
+	
+									
+Sensors
+~~~~~~~				
+
+Your bot is equipped with sensors to understand its environment. Some are
+very simple, and some are low level.
+
+GetRadar()			Returns 4 values which represent quadrants around your bot.
+					Each value is the distance to the nearest enemy in that
+					quadrant. eg "N,E,S,W = GetRadar()"
+					
+GetWalls()			Returns 4 values which represent quadrants around your bot.
+					Each value is the distance to the nearest wall in that
+					quadrant. eg "N,E,S,W = GetRadar()"	
+					
+GetMap()			Returns a lua table populated with bots that are alive
+					and not cloaked. The table is sorted in order of the bots
+					distance from you. Your bot will always be element 0.
+					
+					Example:
+					
+					bots = GetMap()
+					
+					where bots becomes
+					{
+						0 = {id, x, y},		<-- Element 0 is always your bot
+						1 = {id, x, y},
+						2 = {id, x, y},
+						3 = {id, x, y},
+						4 = {id, x, y},
+					}
+					
+					id is the id of the bot, x & y are its location
+					
+GetStatus()			Returns a lua table populated with status information
+					about your bot.
+					
+					Example:
+					
+					me = GetStatus()
+					
+					where me becomes
+					{
+						id 		= Global ID of your bot
+						x 		= Position in X-axis of your bot
+						y		= Position in Y-axis of your bot
+						angle	= Direction your bot is facing in radians
+						health	= Remaining health of your bot, 0 = dead
+						shields	= Remaining number of shield deployments
+						shield_time = Countdown of currently active shield
+						cloaks	= Remaining number of cloak activations
+						cloak_time = Countdown of currently active cloak						
+					}
+					
+GetBattle()			Returns a lua table populated with battle information.
+
+					Example:
+					
+					game = GetBattle()
+					
+					where game becomes
+					{
+						gametime 	= current elapsed time in seconds of battle
+						opponents 	= number of opponents still alive
+						rank		= your bots current rank in battle
+					}

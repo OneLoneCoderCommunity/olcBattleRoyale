@@ -183,13 +183,13 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 
 		case CMD_FORWARDS:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.5f;
+			fCommandTimeRemaining = 0.4f;
 			nNextState = STATE_MOVING_FORWARDS;
 			break;
 
 		case CMD_BACKWARDS:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.5f;
+			fCommandTimeRemaining = 0.4f;
 			nNextState = STATE_MOVING_BACKWARDS;
 			break;
 
@@ -213,6 +213,18 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 				pHost->AddBullet(status.posx, status.posy, cosf(status.angle), sinf(status.angle), status.id);
 				status.cooldown = 0.2f;
 			}
+			nNextState = STATE_COMMAND_COMPLETE;
+			break;
+
+		case CMD_DESTROY:
+			nCommandToExecute = CMD_NOTHING;
+			fCommandTimeRemaining = 0.1f;
+			for (int i = 0; i < 50; i++)
+			{
+				float a = (i / 50.0f) * 3.14159f * 2.0f;
+				pHost->AddBullet(status.posx, status.posy, cosf(a), sinf(a), status.id);
+			}
+			status.health = 0;
 			nNextState = STATE_COMMAND_COMPLETE;
 			break;
 

@@ -67,6 +67,15 @@ float OneLoneCoder_BattleRoyale::DistanceToLineSegment(float x1, float y1, float
 
 void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 {	
+
+	if (bBattleOver)
+		return;
+
+	if(bBattleStarted)
+		fBattleDuration += fElapsedTime;
+
+
+
 	// Update Bullets
 	for (auto &bullet : vecBullets)
 	{
@@ -110,6 +119,9 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 
 	// Count living robot
 	int nAliveRobots = count_if(vecRobots.begin(), vecRobots.end(), [](const cRobot* r1) {return r1->status.health > 0; });
+
+	if (nAliveRobots == 1)
+		bBattleOver = true;
 
 	// Update Robots
 	for (auto &robot : vecRobots)
@@ -202,11 +214,12 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 			{return r1.distance < r2.distance; });
 
 			// Update game state for robot
-			robot->battle.gametime += fElapsedTime;
 			robot->battle.opponents = nAliveRobots;
+			robot->battle.gametime = fBattleDuration;
 
 			// Robots are ranked according to health
 			robot->battle.rank = distance(vecRobots.begin(), find_if(vecRobots.begin(), vecRobots.end(), [robot](const cRobot *r1) { return r1->status.id == robot->status.id; }));
+			
 
 			// Done with writing to robot
 			robot->muxUpdatingSensors.unlock();
@@ -250,6 +263,11 @@ std::string OneLoneCoder_BattleRoyale::TestRobot(std::string sBotFile)
 	return r.Test(sBotFile);	
 }
 
+float OneLoneCoder_BattleRoyale::GetBattleDuration()
+{
+	return fBattleDuration;
+}
+
 std::string OneLoneCoder_BattleRoyale::AddRobot(std::string sBotFile)
 {
 	// Create new robot 
@@ -269,6 +287,19 @@ std::string OneLoneCoder_BattleRoyale::AddRobot(std::string sBotFile)
 
 void OneLoneCoder_BattleRoyale::Start()
 {
+	fBattleDuration = 0.0f;
+	bBattleOver = false;
+	bBattleStarted = true;
 	for (auto& robot : vecRobots)
 		robot->Start();
+}
+
+bool OneLoneCoder_BattleRoyale::IsBattleStarted()
+{
+	return bBattleStarted;
+}
+
+bool OneLoneCoder_BattleRoyale::IsBattleOver()
+{
+	return bBattleOver;
 }

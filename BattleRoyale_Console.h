@@ -31,6 +31,8 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 #include "olcConsoleGameEngineOOP.h"
 #include "BattleRoyale_Engine.h"
 
+#include <fstream>
+
 class OneLoneCoder_BattleRoyaleConsole : public olcConsoleGameEngineOOP
 {
 public:

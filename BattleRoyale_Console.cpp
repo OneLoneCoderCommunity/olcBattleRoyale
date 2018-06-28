@@ -68,34 +68,56 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 
 	// STEP 2) Depending on your interface this will vary, but this code 
 	// demonstrates testing and loading botfiles (lua scripts) into OLCBRE
-	if (GetKey(VK_SPACE).bReleased)
+	if (IsFocused())
 	{
-		vector<string> botFiles = { "JavidBot.lua", "NullBot.lua", "NullBot.lua", "NullBot.lua" };
-
-		for (auto &s : botFiles)
+		if (GetKey(VK_SPACE).bReleased)
 		{
-			// If the script has syntax errors, they will be returned here
-			sErrorMessage = engine.TestRobot(s);
+			if (!engine.IsBattleStarted())
+			{				
+				ifstream data("battle.txt", ios::in | ios::binary);
+				vector<string> botFiles;
+				if (data.is_open())
+				{
+					while (!data.eof() && botFiles.size() < 8)
+					{
+						string s;
+						data >> s;
+						botFiles.push_back(s);
+					}
+				}
+				
+				 //= { "JavidBot.lua", "NullBot.lua" };// , "BrankBot.lua", "NullBot.lua", "JavidBot.lua", "NullBot.lua", "JavidBot.lua", "NullBot.lua"
+			
 
-			// If there are none, it will return OK
-			if(sErrorMessage != "OK")
-			{
-				bDisplayError = true;
+				for (auto &s : botFiles)
+				{
+					// If the script has syntax errors, they will be returned here
+					sErrorMessage = engine.TestRobot(s);
+
+					// If there are none, it will return OK
+					if (sErrorMessage != "OK")
+					{
+						bDisplayError = true;
+						break;
+					}
+					else
+					{
+						// So STEP 3) Add the error free robot to the OLCBRE
+						engine.AddRobot(s);
+					}
+				}
 			}
-			else
-			{
-				// So STEP 3) Add the error free robot to the OLCBRE
-				engine.AddRobot(s);
-			}
+
+			// STEP 4) Once all the robots are loaded, start the battle!
+			if(!bDisplayError)
+				engine.Start();
 		}
-	}
 
-	if (GetKey(L'Z').bReleased)
-	{
-		// STEP 4) Once all the robots are loaded, start the battle!
-		engine.Start();
+		//if (GetKey(L'Z').bReleased)
+		//{
+			
+		//}
 	}
-
 
 	// STEP 5) This needs to be called during your game loop, ideally per frame
 	// with the elapsed time since the last time it was called
@@ -127,7 +149,7 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 			// Robots need to indicate when they are dead (no health left), which I 
 			// do by using a darker shade to display them
 			if (robot->status.health == 0)
-				DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour - 8, PIXEL_SOLID);			
+				DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour, PIXEL_HALF);			
 			else
 				// Else robots should be drawn as normal, facing in the direction 
 				// of their angle
@@ -183,6 +205,19 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 		nList++;
 	}
 
+	int total = (int)engine.GetBattleDuration();
+	int nHours = total / 3600; total %= 3600;
+	int nMinutes = total / 60; total %= 60;
+	int nSeconds = total;
+
+	sDisplay = "Battle Time: " + to_string(nHours) + "h " + to_string(nMinutes) + "m " + to_string(nSeconds) + "s";
+	DrawBigText(sDisplay, 2, 210);
+
+	if (engine.IsBattleOver())
+	{
+		sDisplay = "WINNER = " + engine.GetRobots()[0]->status.name;
+		DrawBigText(sDisplay, 10, 220);
+	}
 	return true;
 }
 
@@ -190,11 +225,22 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 void OneLoneCoder_BattleRoyaleConsole::DrawBigText(string sText, int x, int y)
 {
 	int i = 0;
+	int cx = x;
+	int cy = y;
 	for (auto c : sText)
 	{
+		// Find character in map
 		int sx = ((c - 32) % 16) * 8;
 		int sy = ((c - 32) / 16) * 8;
-		DrawPartialSprite(x + i * 8, y, sprFont, sx, sy, 8, 8);
+
+		DrawPartialSprite(cx, cy, sprFont, sx, sy, 8, 8);
 		i++;
+
+		cx += 8;
+		if (cx >= ScreenWidth() - 8)
+		{
+			cy += 8;
+			cx = 0;
+		}
 	}
 }

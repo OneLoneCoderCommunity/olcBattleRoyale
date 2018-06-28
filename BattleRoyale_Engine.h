@@ -70,7 +70,19 @@ public:
 	// Adds a bullet to the arena
 	void AddBullet(float x, float y, float vx, float vy, int owner);
 
+	// Get length of battle so far in seconds
+	float GetBattleDuration();
+
+	// Get 
+	bool IsBattleStarted();
+	bool IsBattleOver();
+	
+
 private:
+	float fBattleDuration = 0.0f;
+	bool bBattleStarted = false;
+	bool bBattleOver = false;
+	int nWinningRobot = 0;
 	float tx, ty;
 	std::vector<cRobot*> vecRobots;
 	std::vector<sWall> vecWalls;

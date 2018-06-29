@@ -52,6 +52,13 @@ private:
 	vector<pair<float, float>> vecRobotModel;
 	void DrawBigText(string sText, int x, int y);
 
+private: // This stuff stores sound samples for announcments
+	int sfxStart;
+	int sfxPlayerEliminated[8];
+	int sfxPlayerDestruct[8];
+	int sfxPlayerMalfunction[8];
+	int sfxOver;
+
 protected:
 	virtual bool OnUserCreate() override;
 	virtual bool OnUserUpdate(float fElapsedTime) override;

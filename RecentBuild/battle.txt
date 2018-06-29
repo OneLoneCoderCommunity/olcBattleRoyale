@@ -1,5 +1,8 @@
 javidbot.lua
 javidbot.lua
 nullbot.lua
-nullbot.lua
-brankbot.lua
+javidbot.lua
+javidbot.lua
+javidbot.lua
+javidbot.lua
+javidbot.lua

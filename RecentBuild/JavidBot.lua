@@ -20,28 +20,28 @@ function Update()
 	
 	-- Check Enemy Locality
  	n, e, s, w = GetRadar()
-	if n < 20.0 then
-		ActivateShield()
-	end
-
-	if s < 20.0 then
-		ActivateShield()
+	if n < 40.0 then
+		Shield(ON)
+	else
+		Shield(OFF)
 	end
 
 	map = GetMap()	
 	me = GetStatus()
-	if me.health <= 1 then
-		SelfDestruct()
-	end
+	--if me.health <= 1 then
+	--	SelfDestruct()
+	--end
 
 
 	TurnToAngle(math.atan2(map[1].y-me.y, map[1].x-me.x))
 
 	if math.random() >= 0.5 then
 		MoveForward()
-		TurnRight()
-		MoveForward()
 		Fire()
+		TurnRight()
+		Fire()
+		MoveForward()
+		Fire()	
 	else
 		MoveForward()
 		Fire()

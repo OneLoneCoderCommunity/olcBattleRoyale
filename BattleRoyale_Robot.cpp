@@ -125,18 +125,19 @@ void cRobot::LuaScript(std::string sFile, int start_delay)
 	srand(clock());
 	std::this_thread::sleep_for(std::chrono::milliseconds(start_delay));
 
-	while (1)
+	while (!status.malfunction)
 	{
 		lua_getglobal(L, "Update");
 		if (lua_isfunction(L, -1))
 		{
 			if (lua_pcall(L, 0, 0, 0) == LUA_OK)
 			{
-
+				// Robot is good
 			}
 			else
 			{
-
+				// Robot has runtime error, so malfunction
+				status.malfunction = true;
 			}
 		}
 		else
@@ -151,11 +152,18 @@ void cRobot::LuaScript(std::string sFile, int start_delay)
 
 void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* pHost)
 {
-	if (status.shieldactive > 0.0f)
-		status.shieldactive -= fElapsedTime;
+	if (status.cloaked)
+		status.energy -= fElapsedTime;
 
-	if (status.cloakactive > 0.0f)
-		status.cloakactive -= fElapsedTime;
+	if (status.shielded)
+		status.energy -= fElapsedTime;
+
+	if (status.energy <= 0.0f)
+	{
+		status.energy = 0.0f;
+		status.shielded = false;
+		status.cloaked = false;
+	}
 
 	if (status.cooldown > 0.0f)
 		status.cooldown -= fElapsedTime;
@@ -219,9 +227,9 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 		case CMD_DESTROY:
 			nCommandToExecute = CMD_NOTHING;
 			fCommandTimeRemaining = 0.1f;
-			for (int i = 0; i < 50; i++)
+			for (int i = 0; i < 10; i++)
 			{
-				float a = (i / 50.0f) * 3.14159f * 2.0f;
+				float a = (i / 10.0f) * 3.14159f * 2.0f;
 				pHost->AddBullet(status.posx, status.posy, cosf(a), sinf(a), status.id);
 			}
 			status.health = 0;
@@ -252,31 +260,37 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 		}
 		break;
 
-		case CMD_SHIELD:
+		case CMD_SHIELD_ON:
 			nCommandToExecute = CMD_NOTHING;
 			fCommandTimeRemaining = 0.1f;
-			if (status.shieldactive <= 0.0f)
+			if (status.energy >= 0.0f)
 			{
-				if (status.shields > 0)
-				{
-					status.shieldactive = 10.0f;
-					status.shields--;
-				}
+				status.shielded = true;
 			}
 			nNextState = STATE_COMMAND_COMPLETE;
 			break;
 
-		case CMD_CLOAK:
+		case CMD_SHIELD_OFF:
 			nCommandToExecute = CMD_NOTHING;
 			fCommandTimeRemaining = 0.1f;
-			if (status.cloakactive <= 0.0f)
+			status.shielded = false;
+			nNextState = STATE_COMMAND_COMPLETE;
+			break;
+
+		case CMD_CLOAK_ON:
+			nCommandToExecute = CMD_NOTHING;
+			fCommandTimeRemaining = 0.1f;
+			if (status.energy >= 0.0f)
 			{
-				if (status.cloaks > 0)
-				{
-					status.cloakactive = 10.0f;
-					status.cloaks--;
-				}
+				status.cloaked = true;
 			}
+			nNextState = STATE_COMMAND_COMPLETE;
+			break;
+
+		case CMD_CLOAK_OFF:
+			nCommandToExecute = CMD_NOTHING;
+			fCommandTimeRemaining = 0.1f;
+			status.cloaked = false;			
 			nNextState = STATE_COMMAND_COMPLETE;
 			break;
 		}
@@ -433,17 +447,14 @@ int cRobot::lua_ReadSensors(lua_State *L)
 		lua_pushnumber(L, robot->status.health);
 		lua_setfield(L, -2, "health");
 
-		lua_pushnumber(L, robot->status.shields);
-		lua_setfield(L, -2, "shields");
+		lua_pushboolean(L, robot->status.shielded);
+		lua_setfield(L, -2, "shielded");
 
-		lua_pushnumber(L, robot->status.shieldactive);
-		lua_setfield(L, -2, "shield_time");
+		lua_pushboolean(L, robot->status.cloaked);
+		lua_setfield(L, -2, "cloaked");
 
-		lua_pushnumber(L, robot->status.cloaks);
-		lua_setfield(L, -2, "cloaks");
-
-		lua_pushnumber(L, robot->status.cloakactive);
-		lua_setfield(L, -2, "cloak_time");
+		lua_pushnumber(L, robot->status.energy);
+		lua_setfield(L, -2, "energy");
 
 		return 1;
 	}
@@ -456,7 +467,7 @@ int cRobot::lua_ReadSensors(lua_State *L)
 		lua_createtable(L, 0, 9);
 
 		lua_pushnumber(L, robot->battle.gametime);
-		lua_setfield(L, -2, "gametime");
+		lua_setfield(L, -2, "time");
 
 		lua_pushinteger(L, robot->battle.opponents);
 		lua_setfield(L, -2, "opponents");

@@ -36,6 +36,19 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 
 #include "BattleRoyale_Robot.h"
 
+struct sAnnouncement
+{
+	int id;
+	enum COMMENT
+	{
+		ANNOUNCE_START,
+		ANNOUNCE_END,
+		ANNOUNCE_ELIMINATION,
+		ANNOUNCE_MALFUNCTION,
+		ANNOUNCE_TERMINATION,
+	} comment;
+};
+
 class OneLoneCoder_BattleRoyale
 {
 public:
@@ -76,6 +89,9 @@ public:
 	// Get 
 	bool IsBattleStarted();
 	bool IsBattleOver();
+	bool IsAnnouncement();
+
+	sAnnouncement GetAnnouncement();
 	
 
 private:
@@ -87,6 +103,7 @@ private:
 	std::vector<cRobot*> vecRobots;
 	std::vector<sWall> vecWalls;
 	std::vector<sBullet> vecBullets;
+	std::list<sAnnouncement> listAnnouncements;
 	int nArenaWidth = 200;
 	int nArenaHeight = 200;
 	std::atomic<float> fBattleTime = 0.0f;

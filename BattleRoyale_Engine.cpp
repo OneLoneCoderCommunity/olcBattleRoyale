@@ -93,14 +93,21 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 			if (bullet.owner != robot->status.id)
 			{
 				// Ignore if robot has shields raised
-				if (robot->status.shieldactive <= 0.0f)
+				if (!robot->status.shielded)
 				{
 					if (powf(bullet.x - robot->status.posx, 2.0f) + powf(bullet.y - robot->status.posy, 2.0f) <= 16.0f)
 					{
 						// Bullet has hit robot
 						robot->muxUpdatingSensors.lock();
+						if (robot->status.health > 0)
+						{
 							robot->status.health--;
-							if (robot->status.health < 0) robot->status.health = 0;
+							if (robot->status.health <= 0)
+							{
+								robot->status.health = 0;
+								listAnnouncements.push_back({ robot->status.id, sAnnouncement::ANNOUNCE_ELIMINATION });
+							}
+						}
 						robot->muxUpdatingSensors.unlock();
 
 						// Kill Bullet
@@ -188,7 +195,7 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 			{
 				if (enemy->status.id != robot->status.id) // Dont check against self
 				{
-					if (enemy->status.cloakactive <= 0.0f && enemy->status.health > 0)
+					if (!enemy->status.cloaked && enemy->status.health > 0)
 					{
 						float fAngle = atan2f(enemy->status.posy - robot->status.posy, enemy->status.posx - robot->status.posx);
 						float d = sqrtf(powf((enemy->status.posx - robot->status.posx), 2.0f) + powf((enemy->status.posy - robot->status.posy), 2.0f));
@@ -290,6 +297,7 @@ void OneLoneCoder_BattleRoyale::Start()
 	fBattleDuration = 0.0f;
 	bBattleOver = false;
 	bBattleStarted = true;
+	listAnnouncements.push_back({ 0, sAnnouncement::ANNOUNCE_START });
 	for (auto& robot : vecRobots)
 		robot->Start();
 }
@@ -302,4 +310,16 @@ bool OneLoneCoder_BattleRoyale::IsBattleStarted()
 bool OneLoneCoder_BattleRoyale::IsBattleOver()
 {
 	return bBattleOver;
+}
+
+bool OneLoneCoder_BattleRoyale::IsAnnouncement()
+{
+	return !listAnnouncements.empty();
+}
+
+sAnnouncement OneLoneCoder_BattleRoyale::GetAnnouncement()
+{
+	sAnnouncement s = listAnnouncements.front();
+	listAnnouncements.pop_front();
+	return s;
 }

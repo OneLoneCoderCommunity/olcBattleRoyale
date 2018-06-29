@@ -47,6 +47,17 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserCreate()
 		{ -1.0f, -1.0f },{ -1.0f, 0.0f },{ 0.0f, 2.0f },{ 1.0f, 0.0f },{ 1.0f, -1.0f }
 	};
 
+	// Load Sound Resources
+	m_bEnableSound = true;
+	sfxStart = LoadAudioSample(L"sfx/begin.wav");
+	for (int i = 0; i < 8; i++)
+	{
+		sfxPlayerEliminated[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"elim.wav");
+		sfxPlayerDestruct[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"term.wav");
+		sfxPlayerMalfunction[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"mal.wav");
+	}
+	sfxOver = LoadAudioSample(L"sfx/over.wav");
+
 	return true;
 }
 
@@ -139,11 +150,11 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 	for (auto const &robot : engine.GetRobots())
 	{
 		// Robots need a visible shield when it is deployed
-		if (robot->status.shieldactive > 0.0f)
+		if (robot->status.shielded)
 			DrawCircle((int)robot->status.posx, (int)robot->status.posy, (int)7.0f, PIXEL_HALF, FG_CYAN);
 		
 		// Robots need to indicate they are cloaked, in this case I make them translucent
-		if (robot->status.cloakactive > 0.0f)
+		if (robot->status.cloaked)
 			DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour, PIXEL_HALF);
 		else
 			// Robots need to indicate when they are dead (no health left), which I 
@@ -153,7 +164,10 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 			else
 				// Else robots should be drawn as normal, facing in the direction 
 				// of their angle
-				DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour, PIXEL_SOLID);
+				if(!robot->status.malfunction)
+					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour, PIXEL_SOLID);
+				else
+					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, rand(), 3.0f, robot->status.nColour, PIXEL_SOLID);
 	}
 
 	// Draw Bullets - there is only one type of projectile. Bullets have
@@ -171,38 +185,29 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 	// to dead. Those that have died will remain in the order they have died at 
 	// the end of the vector
 
+	int nBarWidth = ScreenWidth() - 1 - 213;
+
 	int nList = 0;
 	string sDisplay = "";
 	for (auto &robot : engine.GetRobots())
 	{
-		Fill(209, nList * 10 + 1, ScreenWidth(), nList * 10 + 22, PIXEL_SOLID, robot->status.nColour - 8);
+		Fill(209, nList * 30 + 0, ScreenWidth(), (nList+1) * 30 + 0, PIXEL_SOLID, robot->status.nColour - 8);
 
-		sDisplay = robot->status.name + " (" + to_string(robot->status.health) + ")";
-		DrawBigText(sDisplay, 210, nList * 10 + 2);
-		nList++;
+		sDisplay = to_string(robot->status.id + 1) + ": " + robot->status.name;
+		DrawBigText(sDisplay, 210, nList * 30 + 2);
+		
 
-		switch (robot->nCurrentState)
-		{
-		case cRobot::STATES::STATE_WAIT_FOR_COMMAND:
-			sDisplay = "IDLE";
-			break;
-		case cRobot::STATES::STATE_MOVING_FORWARDS:
-			sDisplay = "FORWARDS";
-			break;
-		case cRobot::STATES::STATE_MOVING_BACKWARDS:
-			sDisplay = "BACKWARDS";
-			break;
-		case cRobot::STATES::STATE_TURNING_LEFT:
-			sDisplay = "TURNING LEFT";
-			break;
-		case cRobot::STATES::STATE_TURNING_RIGHT:
-			sDisplay = "TURNING RIGHT";
-			break;
-		}
+		// Draw Health Bar
+		Fill(211, nList * 30 + 11, ScreenWidth() - 1, nList * 30 + 19, PIXEL_SOLID, FG_BLACK);
+		float health = (float)robot->status.health / 10.0f;
+		Fill(213, nList * 30 + 13, 213 + health * (float)nBarWidth, nList * 30 + 17, PIXEL_SOLID, FG_RED);
 
-		DrawBigText(sDisplay, 210, nList * 10 + 2);
-		nList++;
-		nList++;
+		// Draw Energy Bar
+		Fill(211, nList * 30 + 20, ScreenWidth() - 1, nList * 30 + 28, PIXEL_SOLID, FG_BLACK);
+		float energy = (float)robot->status.energy / 30.0f;
+		Fill(213, nList * 30 + 22, 213 + energy * (float)nBarWidth, nList * 30 + 26, PIXEL_SOLID, FG_CYAN);
+		
+		nList++;		
 	}
 
 	int total = (int)engine.GetBattleDuration();
@@ -213,9 +218,23 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 	sDisplay = "Battle Time: " + to_string(nHours) + "h " + to_string(nMinutes) + "m " + to_string(nSeconds) + "s";
 	DrawBigText(sDisplay, 2, 210);
 
+	// Step 7) Announcements
+	if (engine.IsAnnouncement())
+	{
+		sAnnouncement s = engine.GetAnnouncement();
+		switch (s.comment)
+		{
+		case sAnnouncement::ANNOUNCE_START: PlaySample(sfxStart); break;
+		case sAnnouncement::ANNOUNCE_END: PlaySample(sfxOver); break;
+		case sAnnouncement::ANNOUNCE_ELIMINATION: PlaySample(sfxPlayerEliminated[s.id]); break;
+		case sAnnouncement::ANNOUNCE_TERMINATION: PlaySample(sfxPlayerDestruct[s.id]); break;
+		case sAnnouncement::ANNOUNCE_MALFUNCTION: PlaySample(sfxPlayerMalfunction[s.id]); break;
+		}
+	}
+
 	if (engine.IsBattleOver())
 	{
-		sDisplay = "WINNER = " + engine.GetRobots()[0]->status.name;
+		sDisplay = "WINNER = " + to_string(engine.GetRobots()[0]->status.id + 1) + ": " + engine.GetRobots()[0]->status.name;
 		DrawBigText(sDisplay, 10, 220);
 	}
 	return true;

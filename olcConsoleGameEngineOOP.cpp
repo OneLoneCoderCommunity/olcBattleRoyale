@@ -39,6 +39,7 @@ olcConsoleGameEngineOOP::olcConsoleGameEngineOOP()
 	m_mousePosX = 0;
 	m_mousePosY = 0;
 
+	m_bEnableSound = false;
 	m_sAppName = L"Default";
 }
 
@@ -390,6 +391,16 @@ void olcConsoleGameEngineOOP::GameThread()
 	if (!OnUserCreate())
 		m_bAtomActive = false;
 
+	// Check if sound system should be enabled
+	if (m_bEnableSound)
+	{
+		if (!CreateAudio())
+		{
+			m_bAtomActive = false; // Failed to create audio system			
+			m_bEnableSound = false;
+		}
+	}
+
 	auto tp1 = chrono::system_clock::now();
 	auto tp2 = chrono::system_clock::now();
 
@@ -513,6 +524,11 @@ void olcConsoleGameEngineOOP::GameThread()
 			WriteConsoleOutput(m_hConsole, m_bufScreen, { (short)m_nScreenWidth, (short)m_nScreenHeight }, { 0,0 }, &m_rectWindow);
 		}
 
+		if (m_bEnableSound)
+		{
+			// Close and Clean up audio system
+		}
+
 		if (OnUserDestroy())
 		{
 			// User has permitted destroy, so exit and clean up
@@ -560,6 +576,230 @@ BOOL olcConsoleGameEngineOOP::CloseHandler(DWORD evt)
 	}
 	return true;
 }
+
+unsigned int olcConsoleGameEngineOOP::LoadAudioSample(std::wstring sWavFile)
+{
+	if (!m_bEnableSound)
+		return -1;
+
+	olcAudioSample a(sWavFile);
+	if (a.bSampleValid)
+	{
+		vecAudioSamples.push_back(a);
+		return vecAudioSamples.size();
+	}
+	else
+		return -1;
+}
+
+// Add sample 'id' to the mixers sounds to play list
+void olcConsoleGameEngineOOP::PlaySample(int id, bool bLoop)
+{
+	listActiveSamples.push_back({ id, 0, false, bLoop });
+}
+
+void StopSample(int id)
+{
+
+}
+
+// The audio system uses by default a specific wave format
+bool olcConsoleGameEngineOOP::CreateAudio(unsigned int nSampleRate, unsigned int nChannels,
+	unsigned int nBlocks, unsigned int nBlockSamples)
+{
+	// Initialise Sound Engine
+	m_bAudioThreadActive = false;
+	m_nSampleRate = nSampleRate;
+	m_nChannels = nChannels;
+	m_nBlockCount = nBlocks;
+	m_nBlockSamples = nBlockSamples;
+	m_nBlockFree = m_nBlockCount;
+	m_nBlockCurrent = 0;
+	m_pBlockMemory = nullptr;
+	m_pWaveHeaders = nullptr;
+
+	// Device is available
+	WAVEFORMATEX waveFormat;
+	waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+	waveFormat.nSamplesPerSec = m_nSampleRate;
+	waveFormat.wBitsPerSample = sizeof(short) * 8;
+	waveFormat.nChannels = m_nChannels;
+	waveFormat.nBlockAlign = (waveFormat.wBitsPerSample / 8) * waveFormat.nChannels;
+	waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
+	waveFormat.cbSize = 0;
+
+	// Open Device if valid
+	if (waveOutOpen(&m_hwDevice, WAVE_MAPPER, &waveFormat, (DWORD_PTR)waveOutProcWrap, (DWORD_PTR)this, CALLBACK_FUNCTION) != S_OK)
+		return DestroyAudio();
+
+	// Allocate Wave|Block Memory
+	m_pBlockMemory = new short[m_nBlockCount * m_nBlockSamples];
+	if (m_pBlockMemory == nullptr)
+		return DestroyAudio();
+	ZeroMemory(m_pBlockMemory, sizeof(short) * m_nBlockCount * m_nBlockSamples);
+
+	m_pWaveHeaders = new WAVEHDR[m_nBlockCount];
+	if (m_pWaveHeaders == nullptr)
+		return DestroyAudio();
+	ZeroMemory(m_pWaveHeaders, sizeof(WAVEHDR) * m_nBlockCount);
+
+	// Link headers to block memory
+	for (unsigned int n = 0; n < m_nBlockCount; n++)
+	{
+		m_pWaveHeaders[n].dwBufferLength = m_nBlockSamples * sizeof(short);
+		m_pWaveHeaders[n].lpData = (LPSTR)(m_pBlockMemory + (n * m_nBlockSamples));
+	}
+
+	m_bAudioThreadActive = true;
+	m_AudioThread = std::thread(&olcConsoleGameEngineOOP::AudioThread, this);
+
+	// Start the ball rolling with the sound delivery thread
+	std::unique_lock<std::mutex> lm(m_muxBlockNotZero);
+	m_cvBlockNotZero.notify_one();
+	return true;
+}
+
+// Stop and clean up audio system
+bool olcConsoleGameEngineOOP::DestroyAudio()
+{
+	m_bAudioThreadActive = false;
+	return false;
+}
+
+// Handler for soundcard request for more data
+void olcConsoleGameEngineOOP::waveOutProc(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
+{
+	if (uMsg != WOM_DONE) return;
+	m_nBlockFree++;
+	std::unique_lock<std::mutex> lm(m_muxBlockNotZero);
+	m_cvBlockNotZero.notify_one();
+}
+
+// Static wrapper for sound card handler
+void CALLBACK olcConsoleGameEngineOOP::waveOutProcWrap(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+{
+	((olcConsoleGameEngineOOP*)dwInstance)->waveOutProc(hWaveOut, uMsg, dwParam1, dwParam2);
+}
+
+// Audio thread. This loop responds to requests from the soundcard to fill 'blocks'
+// with audio data. If no requests are available it goes dormant until the sound
+// card is ready for more data. The block is fille by the "user" in some manner
+// and then issued to the soundcard.
+void olcConsoleGameEngineOOP::AudioThread()
+{
+	m_fGlobalTime = 0.0f;
+	float fTimeStep = 1.0f / (float)m_nSampleRate;
+
+	// Goofy hack to get maximum integer for a type at run-time
+	short nMaxSample = (short)pow(2, (sizeof(short) * 8) - 1) - 1;
+	float fMaxSample = (float)nMaxSample;
+	short nPreviousSample = 0;
+
+	while (m_bAudioThreadActive)
+	{
+		// Wait for block to become available
+		if (m_nBlockFree == 0)
+		{
+			std::unique_lock<std::mutex> lm(m_muxBlockNotZero);
+			while (m_nBlockFree == 0) // sometimes, Windows signals incorrectly
+				m_cvBlockNotZero.wait(lm);
+		}
+
+		// Block is here, so use it
+		m_nBlockFree--;
+
+		// Prepare block for processing
+		if (m_pWaveHeaders[m_nBlockCurrent].dwFlags & WHDR_PREPARED)
+			waveOutUnprepareHeader(m_hwDevice, &m_pWaveHeaders[m_nBlockCurrent], sizeof(WAVEHDR));
+
+		short nNewSample = 0;
+		int nCurrentBlock = m_nBlockCurrent * m_nBlockSamples;
+
+		auto clip = [](float fSample, float fMax)
+		{
+			if (fSample >= 0.0)
+				return fmin(fSample, fMax);
+			else
+				return fmax(fSample, -fMax);
+		};
+
+		for (unsigned int n = 0; n < m_nBlockSamples; n += m_nChannels)
+		{
+			// User Process
+			for (unsigned int c = 0; c < m_nChannels; c++)
+			{
+				nNewSample = (short)(clip(GetMixerOutput(c, m_fGlobalTime, fTimeStep), 1.0) * fMaxSample);
+				m_pBlockMemory[nCurrentBlock + n + c] = nNewSample;
+				nPreviousSample = nNewSample;
+			}
+
+			m_fGlobalTime = m_fGlobalTime + fTimeStep;
+		}
+
+		// Send block to sound device
+		waveOutPrepareHeader(m_hwDevice, &m_pWaveHeaders[m_nBlockCurrent], sizeof(WAVEHDR));
+		waveOutWrite(m_hwDevice, &m_pWaveHeaders[m_nBlockCurrent], sizeof(WAVEHDR));
+		m_nBlockCurrent++;
+		m_nBlockCurrent %= m_nBlockCount;
+	}
+}
+
+// Overridden by user if they want to generate sound in real-time
+float olcConsoleGameEngineOOP::onUserSoundSample(int nChannel, float fGlobalTime, float fTimeStep)
+{
+	return 0.0f;
+}
+
+// Overriden by user if they want to manipulate the sound before it is played
+float olcConsoleGameEngineOOP::onUserSoundFilter(int nChannel, float fGlobalTime, float fSample)
+{
+	return fSample;
+}
+
+// The Sound Mixer - If the user wants to play many sounds simultaneously, and
+// perhaps the same sound overlapping itself, then you need a mixer, which
+// takes input from all sound sources for that audio frame. This mixer maintains
+// a list of sound locations for all concurrently playing audio samples. Instead
+// of duplicating audio data, we simply store the fact that a sound sample is in
+// use and an offset into its sample data. As time progresses we update this offset
+// until it is beyound the length of the sound sample it is attached to. At this
+// point we remove the playing souind from the list.
+//
+// Additionally, the users application may want to generate sound instead of just
+// playing audio clips (think a synthesizer for example) in whcih case we also
+// provide an "onUser..." event to allow the user to return a sound for that point
+// in time.
+//
+// Finally, before the sound is issued to the operating system for performing, the
+// user gets one final chance to "filter" the sound, perhaps changing the volume
+// or adding funky effects
+float olcConsoleGameEngineOOP::GetMixerOutput(int nChannel, float fGlobalTime, float fTimeStep)
+{
+	// Accumulate sample for this channel
+	float fMixerSample = 0.0f;
+
+	for (auto &s : listActiveSamples)
+	{
+		// Calculate sample position
+		s.nSamplePosition += (long)((float)vecAudioSamples[s.nAudioSampleID - 1].wavHeader.nSamplesPerSec * fTimeStep);
+
+		// If sample position is valid add to the mix
+		if (s.nSamplePosition < vecAudioSamples[s.nAudioSampleID - 1].nSamples)
+			fMixerSample += vecAudioSamples[s.nAudioSampleID - 1].fSample[(s.nSamplePosition * vecAudioSamples[s.nAudioSampleID - 1].nChannels) + nChannel];
+		else
+			s.bFinished = true; // Else sound has completed
+	}
+
+	// If sounds have completed then remove them
+	listActiveSamples.remove_if([](const sCurrentlyPlayingSample &s) {return s.bFinished; });
+
+	// The users application might be generating sound, so grab that if it exists
+	fMixerSample += onUserSoundSample(nChannel, fGlobalTime, fTimeStep);
+
+	// Return the sample via an optional user override to filter the sound
+	return onUserSoundFilter(nChannel, fGlobalTime, fMixerSample);
+}
+
 
 atomic<bool> olcConsoleGameEngineOOP::m_bAtomActive = false;
 condition_variable olcConsoleGameEngineOOP::m_cvGameFinished;

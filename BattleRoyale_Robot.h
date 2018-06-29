@@ -54,11 +54,13 @@ enum COMMANDS
 	CMD_TURNLEFT = 3,
 	CMD_TURNRIGHT = 4,
 	CMD_FIRE = 5,
-	CMD_SHIELD = 6,
-	CMD_MINE = 7,
-	CMD_DESTROY = 8,
-	CMD_TURNANGLE = 9,
-	CMD_CLOAK = 10,
+	CMD_SHIELD_ON = 6,
+	CMD_SHIELD_OFF = 7,
+	CMD_CLOAK_ON = 8,
+	CMD_CLOAK_OFF = 9,
+	CMD_MINE = 10,
+	CMD_DESTROY = 11,
+	CMD_TURNANGLE = 12,	
 };
 
 struct sWall
@@ -88,11 +90,8 @@ public:
 		float posy = 150.0f;
 		float angle = 0.0f;
 		float speed = 0.0f;
-		int health = 10;
-		int shields = 3;
-		float shieldactive = 0.0f;
-		int cloaks = 3;
-		float cloakactive = 0.0f;
+		int health = 6;
+		float energy = 20.0f;
 		float cooldown = 0.0f;
 		int id = 0;
 		float fMoveSpeed = 30.0f;
@@ -100,6 +99,9 @@ public:
 		short nColour = 0;
 		std::string name;
 		std::string script;
+		bool malfunction = false;
+		bool shielded = false;
+		bool cloaked = false;
 	} status;
 
 	struct BATTLE

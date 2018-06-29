@@ -1,15 +1,19 @@
-local CMD_NOTHING	= 0
-local CMD_FORWARDS	= 1
-local CMD_BACKWARDS	= 2
-local CMD_TURNLEFT	= 3
-local CMD_TURNRIGHT	= 4
-local CMD_FIRE		= 5
-local CMD_SHIELD	= 6
-local CMD_MINE		= 7
-local CMD_DESTROY	= 8
-local CMD_TURNANGLE	= 9
-local CMD_CLOAK		= 10
+local CMD_NOTHING = 0
+local CMD_FORWARDS = 1
+local CMD_BACKWARDS = 2
+local CMD_TURNLEFT = 3
+local CMD_TURNRIGHT = 4
+local CMD_FIRE = 5
+local CMD_SHIELD_ON = 6
+local CMD_SHIELD_OFF = 7
+local CMD_CLOAK_ON = 8
+local CMD_CLOAK_OFF = 9
+local CMD_MINE = 10
+local CMD_DESTROY = 11
+local CMD_TURNANGLE = 12	
 
+ON = 1
+OFF = 0
 
 local RobotGUID = 0
 
@@ -41,13 +45,29 @@ function TurnToAngle(a)
 	_PerformAction(RobotGUID, CMD_TURNANGLE, a)
 end
 
-function ActivateShield()
-	_PerformAction(RobotGUID, CMD_SHIELD)
+function Shield(a)
+	if a == ON then
+		_PerformAction(RobotGUID, CMD_SHIELD_ON)
+	else
+		_PerformAction(RobotGUID, CMD_SHIELD_OFF)
+	end
+end
+
+function Cloak(a)
+	if a == ON then
+		_PerformAction(RobotGUID, CMD_CLOAK_ON)
+	else
+		_PerformAction(RobotGUID, CMD_CLOAK_OFF)
+	end
 end
 
 function SelfDestruct()
 	_PerformAction(RobotGUID, CMD_DESTROY)
 end
+
+
+
+
 
 
 function GetWalls()
@@ -66,10 +86,8 @@ function GetStatus()
 	return _ReadSensors(RobotGUID, 3)
 end
 
-function GetGame()
+function GetBattle()
 	return _ReadSensors(RobotGUID, 4)
 end
 
-function SelfDestruct()
-	_PerformAction(RobotGUID, CMD_DESTROY)
-end
+

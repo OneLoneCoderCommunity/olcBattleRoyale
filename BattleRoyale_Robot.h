@@ -35,6 +35,7 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 #include <thread>
 #include <atomic>
 #include <condition_variable>
+#include <cmath>
 
 extern "C"
 {
@@ -43,6 +44,7 @@ extern "C"
 #include "lualib.h"
 }
 
+#include "BattleRoyale_Parameters.h"
 
 class OneLoneCoder_BattleRoyale;
 
@@ -90,24 +92,27 @@ public:
 		float posy = 150.0f;
 		float angle = 0.0f;
 		float speed = 0.0f;
-		int health = 6;
-		float energy = 20.0f;
+		int health = BattleRoyale_Parameters::nMaxRobotHealth;
+		float energy = BattleRoyale_Parameters::fMaxRobotEnergy;
 		float cooldown = 0.0f;
 		int id = 0;
-		float fMoveSpeed = 30.0f;
-		float fTurnSpeed = 3.14159f / 2.0f;
+		float fMoveSpeed = BattleRoyale_Parameters::fRobotMoveSpeed;
+		float fTurnSpeed = BattleRoyale_Parameters::fRobotTurnSpeed;
 		short nColour = 0;
 		std::string name;
 		std::string script;
 		bool malfunction = false;
 		bool shielded = false;
 		bool cloaked = false;
+		int team = 0;
+		std::string sDebugOutput;
 	} status;
 
 	struct BATTLE
 	{
 		float gametime = 0.0f;
-		int opponents = 0;
+		int enemies = 0;
+		int allies = 0;
 		int rank = 0;
 	} battle;
 
@@ -132,6 +137,7 @@ public:
 		struct MAP_ENTRY
 		{
 			int id;
+			int team;
 			float x;
 			float y;
 			float distance;

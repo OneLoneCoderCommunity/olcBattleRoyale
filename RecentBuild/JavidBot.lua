@@ -28,22 +28,26 @@ function Update()
 
 	map = GetMap()	
 	me = GetStatus()
-	--if me.health <= 1 then
-	--	SelfDestruct()
-	--end
+	battle = GetBattle()
 
+	-- Count how many opponents were visible
+	count = 0
+	for _ in pairs(map) do count = count + 1 end
+	
+	-- Find first opponent not on my team
+	i = 0
+	while i < count and me.team == map[i].team do
+		i = i + 1
+	end
 
-	TurnToAngle(math.atan2(map[1].y-me.y, map[1].x-me.x))
-
-	if math.random() >= 0.5 then
-		MoveForward()
+	if battle.enemies > 0 then
+		TurnToAngle(math.atan2(map[i].y-me.y, map[i].x-me.x))
 		Fire()
-		TurnRight()
-		Fire()
-		MoveForward()
-		Fire()	
 	else
-		MoveForward()
-		Fire()
-	end	
+		while true do
+			TurnLeft()
+		end
+	end
+	
+
 end

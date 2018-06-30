@@ -1,8 +1,0 @@
-javidbot.lua
-javidbot.lua
-nullbot.lua
-javidbot.lua
-javidbot.lua
-javidbot.lua
-javidbot.lua
-javidbot.lua

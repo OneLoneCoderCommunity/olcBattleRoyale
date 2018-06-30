@@ -32,7 +32,7 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 #include <list>
 #include <thread>
 #include <atomic>
-
+#include <cmath>
 
 #include "BattleRoyale_Robot.h"
 
@@ -75,7 +75,7 @@ public:
 	std::string TestRobot(std::string sBotFile);
 
 	// Add the robot to the arena
-	std::string AddRobot(std::string sBotFile);
+	std::string AddRobot(std::string sBotFile, int nTeamID);
 
 	// Start the battle
 	void Start();
@@ -106,7 +106,7 @@ private:
 	std::list<sAnnouncement> listAnnouncements;
 	int nArenaWidth = 200;
 	int nArenaHeight = 200;
-	std::atomic<float> fBattleTime = 0.0f;
+	std::atomic<float> fBattleTime{ 0.0f };
 	std::mutex muxBullets;
 	float DistanceToLineSegment(float x1, float y1, float x2, float y2, sWall &edge);
 };

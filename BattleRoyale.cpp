@@ -44,9 +44,26 @@ Last Updated: 14/06/2018
 #pragma once
 
 #include "BattleRoyale_Console.h"
+#include "BattleRoyale_Parameters.h"
 
-int main()
+int main(int argc, char** argv)
 {
+	// Load parameters, either default
+	BattleRoyale_Parameters brp;
+	
+	// Or use file dragged onto exe, or command line args
+	if (argc > 1)
+	{
+		if (!brp.LoadParameters(argv[2]))
+		{
+			std::cout << "Parameter file invalid" << std::endl;
+			return -1;
+		}
+	}
+	else
+		brp.LoadParameters("BattleRoyaleRules.lua");
+
+	// Launch Simulation
 	OneLoneCoder_BattleRoyaleConsole demo;
 	demo.ConstructConsole(320, 240, 4, 4);
 	demo.Start();

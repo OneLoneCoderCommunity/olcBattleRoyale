@@ -29,6 +29,6 @@ function Update()
 
 	me = GetStatus()
 	if me.health < 3 then
-		SelfDestruct()
+	--	SelfDestruct()
 	end
 end

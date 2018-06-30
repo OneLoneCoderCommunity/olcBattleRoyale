@@ -138,6 +138,7 @@ void cRobot::LuaScript(std::string sFile, int start_delay)
 			{
 				// Robot has runtime error, so malfunction
 				status.malfunction = true;
+				status.sDebugOutput = lua_tostring(L, -1);
 			}
 		}
 		else
@@ -191,25 +192,25 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 
 		case CMD_FORWARDS:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.4f;
+			fCommandTimeRemaining = BattleRoyale_Parameters::fRobotMoveTime;
 			nNextState = STATE_MOVING_FORWARDS;
 			break;
 
 		case CMD_BACKWARDS:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.4f;
+			fCommandTimeRemaining = BattleRoyale_Parameters::fRobotMoveTime;
 			nNextState = STATE_MOVING_BACKWARDS;
 			break;
 
 		case CMD_TURNLEFT:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.5f;
+			fCommandTimeRemaining = BattleRoyale_Parameters::fRobotTurnTime;
 			nNextState = STATE_TURNING_LEFT;
 			break;
 
 		case CMD_TURNRIGHT:
 			nCommandToExecute = CMD_NOTHING;
-			fCommandTimeRemaining = 0.5f;
+			fCommandTimeRemaining = BattleRoyale_Parameters::fRobotTurnTime;
 			nNextState = STATE_TURNING_RIGHT;
 			break;
 
@@ -219,7 +220,7 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 			if (status.cooldown <= 0.0f)
 			{
 				pHost->AddBullet(status.posx, status.posy, cosf(status.angle), sinf(status.angle), status.id);
-				status.cooldown = 0.2f;
+				status.cooldown = BattleRoyale_Parameters::fGunCooldown;
 			}
 			nNextState = STATE_COMMAND_COMPLETE;
 			break;
@@ -227,9 +228,9 @@ void cRobot::UpdateStateMachine(float fElapsedTime, OneLoneCoder_BattleRoyale* p
 		case CMD_DESTROY:
 			nCommandToExecute = CMD_NOTHING;
 			fCommandTimeRemaining = 0.1f;
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < BattleRoyale_Parameters::nSelfDestructBullets; i++)
 			{
-				float a = (i / 10.0f) * 3.14159f * 2.0f;
+				float a = (i / (float)BattleRoyale_Parameters::nSelfDestructBullets) * 3.14159f * 2.0f;
 				pHost->AddBullet(status.posx, status.posy, cosf(a), sinf(a), status.id);
 			}
 			status.health = 0;
@@ -405,10 +406,13 @@ int cRobot::lua_ReadSensors(lua_State *L)
 			lua_pushinteger(L, nRobotCount);
 
 			// Push properties table {name, x, y}
-			lua_createtable(L, 0, 3);
+			lua_createtable(L, 0, 4);
 
-			lua_pushinteger(L, m.id);
-			lua_setfield(L, -2, "name");
+			lua_pushnumber(L, m.id);
+			lua_setfield(L, -2, "id");
+
+			lua_pushnumber(L, m.team);
+			lua_setfield(L, -2, "team");
 
 			lua_pushnumber(L, m.x);
 			lua_setfield(L, -2, "x");
@@ -432,8 +436,11 @@ int cRobot::lua_ReadSensors(lua_State *L)
 		// Create table with number of robots as entries
 		lua_createtable(L, 0, 9);
 
-		lua_pushinteger(L, robot->status.id);
+		lua_pushnumber(L, robot->status.id);
 		lua_setfield(L, -2, "id");
+
+		lua_pushnumber(L, robot->status.team);
+		lua_setfield(L, -2, "team");
 
 		lua_pushnumber(L, robot->status.posx);
 		lua_setfield(L, -2, "x");
@@ -464,16 +471,21 @@ int cRobot::lua_ReadSensors(lua_State *L)
 		std::unique_lock<std::mutex> lm(robot->muxUpdatingSensors);
 
 		// Create table with number of robots as entries
-		lua_createtable(L, 0, 9);
+		lua_createtable(L, 0, 3);
 
 		lua_pushnumber(L, robot->battle.gametime);
 		lua_setfield(L, -2, "time");
 
-		lua_pushinteger(L, robot->battle.opponents);
-		lua_setfield(L, -2, "opponents");
+		lua_pushnumber(L, robot->battle.enemies);
+		lua_setfield(L, -2, "enemies");
 
-		lua_pushinteger(L, robot->battle.rank);
+		lua_pushnumber(L, robot->battle.allies);
+		lua_setfield(L, -2, "allies");
+
+		lua_pushnumber(L, robot->battle.rank);
 		lua_setfield(L, -2, "rank");
+
+		return 1;
 	}
 
 	// No arguments to return

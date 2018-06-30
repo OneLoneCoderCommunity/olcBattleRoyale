@@ -85,7 +85,7 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 		{
 			if (!engine.IsBattleStarted())
 			{				
-				ifstream data("battle.txt", ios::in | ios::binary);
+				/*ifstream data("battle.txt", ios::in | ios::binary);
 				vector<string> botFiles;
 				if (data.is_open())
 				{
@@ -95,15 +95,16 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 						data >> s;
 						botFiles.push_back(s);
 					}
-				}
-				
-				 //= { "JavidBot.lua", "NullBot.lua" };// , "BrankBot.lua", "NullBot.lua", "JavidBot.lua", "NullBot.lua", "JavidBot.lua", "NullBot.lua"
-			
+				}*/
 
-				for (auto &s : botFiles)
+				// Robots to load will be defined in BattlRoyale_Parameters
+				for (auto &s : BattleRoyale_Parameters::vecRobots)
 				{
+					int nTeamID = s.first;
+					std::string sBotFile = s.second;
+
 					// If the script has syntax errors, they will be returned here
-					sErrorMessage = engine.TestRobot(s);
+					sErrorMessage = engine.TestRobot(sBotFile);
 
 					// If there are none, it will return OK
 					if (sErrorMessage != "OK")
@@ -114,7 +115,7 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 					else
 					{
 						// So STEP 3) Add the error free robot to the OLCBRE
-						engine.AddRobot(s);
+						engine.AddRobot(sBotFile, nTeamID);
 					}
 				}
 			}
@@ -123,11 +124,6 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 			if(!bDisplayError)
 				engine.Start();
 		}
-
-		//if (GetKey(L'Z').bReleased)
-		//{
-			
-		//}
 	}
 
 	// STEP 5) This needs to be called during your game loop, ideally per frame
@@ -164,10 +160,16 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 			else
 				// Else robots should be drawn as normal, facing in the direction 
 				// of their angle
-				if(!robot->status.malfunction)
+				if (!robot->status.malfunction)
+				{
 					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, robot->status.angle - (3.14159f / 2.0f), 3.0f, robot->status.nColour, PIXEL_SOLID);
+				}
 				else
-					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, rand(), 3.0f, robot->status.nColour, PIXEL_SOLID);
+				{
+					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, (float)rand(), 3.0f, robot->status.nColour, PIXEL_SOLID);
+					bDisplayError = true;
+					sErrorMessage = robot->status.sDebugOutput;
+				}
 	}
 
 	// Draw Bullets - there is only one type of projectile. Bullets have
@@ -199,13 +201,13 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 
 		// Draw Health Bar
 		Fill(211, nList * 30 + 11, ScreenWidth() - 1, nList * 30 + 19, PIXEL_SOLID, FG_BLACK);
-		float health = (float)robot->status.health / 10.0f;
-		Fill(213, nList * 30 + 13, 213 + health * (float)nBarWidth, nList * 30 + 17, PIXEL_SOLID, FG_RED);
+		float health = (float)robot->status.health / (float)BattleRoyale_Parameters::nMaxRobotHealth;
+		Fill(213, nList * 30 + 13, (int)(211.0f + health * (float)nBarWidth), nList * 30 + 17, PIXEL_SOLID, FG_RED);
 
 		// Draw Energy Bar
 		Fill(211, nList * 30 + 20, ScreenWidth() - 1, nList * 30 + 28, PIXEL_SOLID, FG_BLACK);
-		float energy = (float)robot->status.energy / 30.0f;
-		Fill(213, nList * 30 + 22, 213 + energy * (float)nBarWidth, nList * 30 + 26, PIXEL_SOLID, FG_CYAN);
+		float energy = robot->status.energy / BattleRoyale_Parameters::fMaxRobotEnergy;
+		Fill(213, nList * 30 + 22, (int)(211.0f + energy * (float)nBarWidth), nList * 30 + 26, PIXEL_SOLID, FG_CYAN);
 		
 		nList++;		
 	}

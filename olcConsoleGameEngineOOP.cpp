@@ -94,6 +94,7 @@ int olcConsoleGameEngineOOP::ConstructConsole(int width, int height, int fontw, 
 	//wcscpy_s(cfi.FaceName, L"Lucida Console");
 	//wcscpy_s(cfi.FaceName, L"Liberation Mono");
 	wcscpy_s(cfi.FaceName, L"Consolas");
+	//wcscpy_s(cfi.FaceName, L"Raster");
 	if (!SetCurrentConsoleFontEx(m_hConsole, false, &cfi))
 		return Error(L"SetCurrentConsoleFontEx");
 

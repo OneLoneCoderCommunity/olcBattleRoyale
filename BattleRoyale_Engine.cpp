@@ -26,6 +26,7 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 #include "BattleRoyale_Engine.h"
 
 
+
 OneLoneCoder_BattleRoyale::OneLoneCoder_BattleRoyale()
 {
 
@@ -208,26 +209,30 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 						if (fAngle >= 3.14159f * 0.75f || fAngle < -3.14159f * 0.75f)
 							robot->enemy.w = std::min(robot->enemy.w, d);
 
-						robot->map.entries.push_back({ enemy->status.id, enemy->status.posx, enemy->status.posy, d });
+						robot->map.entries.push_back({ enemy->status.id, enemy->status.team, enemy->status.posx, enemy->status.posy, d });
 					}
 				}
 			}
 
 			// Add yourself to map at element 0
-			robot->map.entries.push_back({ robot->status.id, robot->status.posx, robot->status.posy, 0 });
+			robot->map.entries.push_back({ robot->status.id, robot->status.team, robot->status.posx, robot->status.posy, 0 });
 
 			// Sort map entries by distance
-			sort(robot->map.entries.begin(), robot->map.entries.end(), [](const cRobot::MAP_SENSOR::MAP_ENTRY &r1, const cRobot::MAP_SENSOR::MAP_ENTRY &r2)
+			std::sort(robot->map.entries.begin(), robot->map.entries.end(), [](const cRobot::MAP_SENSOR::MAP_ENTRY &r1, const cRobot::MAP_SENSOR::MAP_ENTRY &r2)
 			{return r1.distance < r2.distance; });
 
 			// Update game state for robot
-			robot->battle.opponents = nAliveRobots;
 			robot->battle.gametime = fBattleDuration;
 
-			// Robots are ranked according to health
-			robot->battle.rank = distance(vecRobots.begin(), find_if(vecRobots.begin(), vecRobots.end(), [robot](const cRobot *r1) { return r1->status.id == robot->status.id; }));
+			// Count how many allies are on team that are still alive
+			robot->battle.allies = -1 + std::count_if(vecRobots.begin(), vecRobots.end(), [robot](const cRobot *r1) { return (r1->status.team == robot->status.team) && r1->status.health > 0; });
+
+			robot->battle.enemies = nAliveRobots - robot->battle.allies - 1;
 			
 
+			// Robots are ranked according to health
+			robot->battle.rank = std::distance(vecRobots.begin(), std::find_if(vecRobots.begin(), vecRobots.end(), [robot](const cRobot *r1) { return r1->status.id == robot->status.id; }));
+			
 			// Done with writing to robot
 			robot->muxUpdatingSensors.unlock();
 
@@ -275,11 +280,12 @@ float OneLoneCoder_BattleRoyale::GetBattleDuration()
 	return fBattleDuration;
 }
 
-std::string OneLoneCoder_BattleRoyale::AddRobot(std::string sBotFile)
+std::string OneLoneCoder_BattleRoyale::AddRobot(std::string sBotFile, int nTeamID)
 {
 	// Create new robot 
 	cRobot* robot = new cRobot();
 	robot->status.id = vecRobots.size();
+	robot->status.team = nTeamID;
 	robot->status.posx = (float)(rand() % 200);
 	robot->status.posy = (float)(rand() % 200);
 	robot->status.angle = ((float)rand() / (float)RAND_MAX) * 3.14159f * 2.0f;

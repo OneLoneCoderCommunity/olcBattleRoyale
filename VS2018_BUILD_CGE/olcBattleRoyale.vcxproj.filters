@@ -33,6 +33,9 @@
     <ClCompile Include="..\Core\BattleRoyale_Robot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="olcConsoleGameEngineGLOOP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BattleRoyale_Console.h">
@@ -48,6 +51,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\BattleRoyale_Robot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="olcConsoleGameEngineGL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="olcConsoleGameEngineGLOOP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

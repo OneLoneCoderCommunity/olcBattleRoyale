@@ -11,6 +11,10 @@ Global
 		Debug|x86 = Debug|x86
 		Release_CGE_Big|x64 = Release_CGE_Big|x64
 		Release_CGE_Big|x86 = Release_CGE_Big|x86
+		Release_CGE_GL_Big|x64 = Release_CGE_GL_Big|x64
+		Release_CGE_GL_Big|x86 = Release_CGE_GL_Big|x86
+		Release_CGE_Raster|x64 = Release_CGE_Raster|x64
+		Release_CGE_Raster|x86 = Release_CGE_Raster|x86
 		Release_CGE_Small|x64 = Release_CGE_Small|x64
 		Release_CGE_Small|x86 = Release_CGE_Small|x86
 		Release|x64 = Release|x64
@@ -25,6 +29,14 @@ Global
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Big|x64.Build.0 = Release_CGE_Big|x64
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Big|x86.ActiveCfg = Release_CGE_Big|Win32
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Big|x86.Build.0 = Release_CGE_Big|Win32
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_GL_Big|x64.ActiveCfg = Release_CGE_GL_Big|x64
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_GL_Big|x64.Build.0 = Release_CGE_GL_Big|x64
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_GL_Big|x86.ActiveCfg = Release_CGE_GL_Big|Win32
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_GL_Big|x86.Build.0 = Release_CGE_GL_Big|Win32
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Raster|x64.ActiveCfg = Release_CGE_Raster|x64
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Raster|x64.Build.0 = Release_CGE_Raster|x64
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Raster|x86.ActiveCfg = Release_CGE_Raster|Win32
+		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Raster|x86.Build.0 = Release_CGE_Raster|Win32
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Small|x64.ActiveCfg = Release_CGE_Small|x64
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Small|x64.Build.0 = Release_CGE_Small|x64
 		{57B3E944-D224-4D2A-92F9-674070570C12}.Release_CGE_Small|x86.ActiveCfg = Release_CGE_Small|Win32

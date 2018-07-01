@@ -80,8 +80,8 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 	// Update Bullets
 	for (auto &bullet : vecBullets)
 	{
-		bullet.x += bullet.vx * 100.0f * fElapsedTime;
-		bullet.y += bullet.vy * 100.0f * fElapsedTime;
+		bullet.x += bullet.vx * BattleRoyale_Parameters::fBulletSpeed * fElapsedTime;
+		bullet.y += bullet.vy * BattleRoyale_Parameters::fBulletSpeed * fElapsedTime;
 
 		// Has bullet left arena?
 		if (bullet.x<0.0f || bullet.x > 200.0f || bullet.y <0.0f || bullet.y > 200.0f)
@@ -102,7 +102,7 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 						robot->muxUpdatingSensors.lock();
 						if (robot->status.health > 0)
 						{
-							robot->status.health--;
+							robot->status.health -= BattleRoyale_Parameters::nBulletDamage;
 							if (robot->status.health <= 0)
 							{
 								robot->status.health = 0;
@@ -130,6 +130,8 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 
 	if (nAliveRobots == 1)
 		bBattleOver = true;
+
+	// Count unique teams that still have members that are alive
 
 	// Update Robots
 	for (auto &robot : vecRobots)
@@ -282,6 +284,9 @@ float OneLoneCoder_BattleRoyale::GetBattleDuration()
 
 std::string OneLoneCoder_BattleRoyale::AddRobot(std::string sBotFile, int nTeamID)
 {
+	if (vecRobots.size() == BattleRoyale_Parameters::nMaxRobots)
+		return "TOO MANY ROBOTS";
+	
 	// Create new robot 
 	cRobot* robot = new cRobot();
 	robot->status.id = vecRobots.size();

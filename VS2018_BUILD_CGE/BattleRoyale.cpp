@@ -44,7 +44,7 @@ Last Updated: 14/06/2018
 #pragma once
 
 #include "BattleRoyale_Console.h"
-#include "BattleRoyale_Parameters.h"
+#include "../Core/BattleRoyale_Parameters.h"
 
 int main(int argc, char** argv)
 {
@@ -65,7 +65,15 @@ int main(int argc, char** argv)
 
 	// Launch Simulation
 	OneLoneCoder_BattleRoyaleConsole demo;
+
+#ifdef SIZE_BIG
 	demo.ConstructConsole(320, 240, 4, 4);
+#endif
+
+#ifdef SIZE_SMALL
+	demo.ConstructConsole(320, 240, 2, 2);
+#endif
+
 	demo.Start();
 	return 0;
 }

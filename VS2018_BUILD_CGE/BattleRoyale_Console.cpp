@@ -42,21 +42,21 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserCreate()
 	engine.AddWall(200.0f, 0.0f, 200.0f, 200.0f);
 
 	// These are just console only graphics resources
-	sprFont = new olcSprite(L"javidx9_nesfont8x8.spr");
+	sprFont = new olcSprite(L"assets/javidx9_nesfont8x8.spr");
 	vecRobotModel = {
 		{ -1.0f, -1.0f },{ -1.0f, 0.0f },{ 0.0f, 2.0f },{ 1.0f, 0.0f },{ 1.0f, -1.0f }
 	};
 
 	// Load Sound Resources
 	m_bEnableSound = true;
-	sfxStart = LoadAudioSample(L"sfx/begin.wav");
+	sfxStart = LoadAudioSample(L"assets/begin.wav");
 	for (int i = 0; i < 8; i++)
 	{
-		sfxPlayerEliminated[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"elim.wav");
-		sfxPlayerDestruct[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"term.wav");
-		sfxPlayerMalfunction[i] = LoadAudioSample(L"sfx/p" + to_wstring(i + 1) + L"mal.wav");
+		sfxPlayerEliminated[i] = LoadAudioSample(L"assets/p" + to_wstring(i + 1) + L"elim.wav");
+		sfxPlayerDestruct[i] = LoadAudioSample(L"assets/p" + to_wstring(i + 1) + L"term.wav");
+		sfxPlayerMalfunction[i] = LoadAudioSample(L"assets/p" + to_wstring(i + 1) + L"mal.wav");
 	}
-	sfxOver = LoadAudioSample(L"sfx/over.wav");
+	sfxOver = LoadAudioSample(L"assets/over.wav");
 
 	return true;
 }
@@ -104,7 +104,7 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 					std::string sBotFile = s.second;
 
 					// If the script has syntax errors, they will be returned here
-					sErrorMessage = engine.TestRobot(sBotFile);
+					sErrorMessage = engine.TestRobot("robots/" + sBotFile);
 
 					// If there are none, it will return OK
 					if (sErrorMessage != "OK")
@@ -115,7 +115,7 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 					else
 					{
 						// So STEP 3) Add the error free robot to the OLCBRE
-						engine.AddRobot(sBotFile, nTeamID);
+						engine.AddRobot("robots/" + sBotFile, nTeamID);
 					}
 				}
 			}

@@ -28,12 +28,17 @@ SoundCloud: https://www.soundcloud.com/onelonecoder
 // This class is just a wrapper that interfaces with the OLC Battle Royale Engine!
 // You can create your own interfaces in whatever API you like!
 
+#ifdef CGE_OLC
 #include "olcConsoleGameEngineOOP.h"
-#include "BattleRoyale_Engine.h"
+#endif
+
+#include "../Core/BattleRoyale_Engine.h"
 
 #include <fstream>
 
+#ifdef CGE_OLC
 class OneLoneCoder_BattleRoyaleConsole : public olcConsoleGameEngineOOP
+#endif
 {
 public:
 	OneLoneCoder_BattleRoyaleConsole();

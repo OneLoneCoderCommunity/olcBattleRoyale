@@ -1,0 +1,10 @@
+*.pdb
+Releases/olcBattleRoyale_OLC_Dbg.ilk
+*.ipdb
+*.iobj
+Releases/olcBattleRoyale_OLC_Dbg.exe
+VS2018_BUILD_CGE/.vs
+VS2018_BUILD_CGE/BuildOutputs
+VS2018_BUILD_CGE/Debug
+VS2018_BUILD_CGE/Release
+*.user

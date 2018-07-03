@@ -61,7 +61,9 @@ int main(int argc, char** argv)
 		}
 	}
 	else
-		brp.LoadParameters("BattleRoyaleRules.lua");
+	{
+		if(!brp.LoadParameters("BattleRoyaleRules.lua")) return -1;
+	}
 
 	// Launch Simulation
 	OneLoneCoder_BattleRoyaleConsole demo;

@@ -15,8 +15,12 @@ int BattleRoyale_Parameters::nBulletDamage = 1;
 float BattleRoyale_Parameters::fBulletSpeed = 100.0f;
 int BattleRoyale_Parameters::nSelfDestructBullets = 10;
 int BattleRoyale_Parameters::nBattleMode = 1;
+float BattleRoyale_Parameters::fCollisionRadius = 4.0f;
+bool BattleRoyale_Parameters::bAllowFriendlyFire = false;
+
 std::vector<std::pair<int, std::string>> BattleRoyale_Parameters::vecRobots;
 std::vector<std::string> BattleRoyale_Parameters::vecTeamNames;
+std::vector<std::tuple<float, float, float, float>> BattleRoyale_Parameters::vecWalls;
 
 
 BattleRoyale_Parameters::BattleRoyale_Parameters()
@@ -90,6 +94,14 @@ bool BattleRoyale_Parameters::LoadParameters(std::string sFile)
 	lua_getglobal(L, "SelfDestructBullets");
 	if (lua_isinteger(L, -1)) BattleRoyale_Parameters::nSelfDestructBullets = (int)lua_tointeger(L, -1);
 
+	lua_getglobal(L, "RobotHitRadius");
+	if (lua_isnumber(L, -1)) BattleRoyale_Parameters::fCollisionRadius = (float)lua_tonumber(L, -1);
+
+	lua_getglobal(L, "AllowFriendlyFire");
+	if (lua_isboolean(L, -1)) BattleRoyale_Parameters::bAllowFriendlyFire = (bool)lua_toboolean(L, -1);
+
+
+	// Read in teams
 	lua_getglobal(L, "Teams"); // -1 Table "Teams"
 	if (lua_istable(L, -1))
 	{
@@ -114,6 +126,32 @@ bool BattleRoyale_Parameters::LoadParameters(std::string sFile)
 		}
 	}
 
+	// Read in walls
+	lua_getglobal(L, "Walls"); // -1 Table "Teams"
+	if (lua_istable(L, -1))
+	{
+		lua_pushnil(L); // -2 Key Nil : -1 Table "Teams"
+
+		while (lua_next(L, -2) != 0) // -1 Table : -2 Key "TeamName" : -3 Table "Teams"
+		{			
+			if (lua_istable(L, -1))
+			{
+				lua_gettable(L, -1); // -1 Table : -2 Table Value : -3 Key "TeamName" : -4 Table "Teams" 
+				lua_pushnil(L);      // -1 Key Nil : -2 Table : -3 Table Value : -4 Key "TeamName" : -5 Table "Teams" 
+				float f[4];
+				int i = 0;
+				while (lua_next(L, -2) != 0) // -1 Value "BotFile" : -2 Key Nil : -3 Table : -4 Table Value : -5 Key "TeamName" : -6 Table "Teams" 
+				{
+					f[i] = (float)lua_tonumber(L, -1);
+					i++;
+					lua_pop(L, 1); // -1 Key Nil : -2 Table : -3 Table Value : -4 Key "TeamName" : -5 Table "Teams" 
+				}
+
+				vecWalls.push_back({ f[0], f[1], f[2], f[3] });
+			}
+			lua_pop(L, 1); // -1 Table : -2 Table Value : -3 Key "TeamName" : -4 Table "Teams" 
+		}
+	}
 
 	return true;
 }

@@ -36,10 +36,11 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserCreate()
 	// STEP 1) Configure Battle Engine Parameters
 	// This needs to be performed before any robots are loaded
 	// into the OLCBRE
-	engine.AddWall(0.0f, 0.0f, 200.0f, 0.0f);
-	engine.AddWall(0.0f, 200.0f, 200.0f, 200.0f);
-	engine.AddWall(0.0f, 0.0f, 0.0f, 200.0f);
-	engine.AddWall(200.0f, 0.0f, 200.0f, 200.0f);
+
+	// Add walls to arena
+	for (auto w : BattleRoyale_Parameters::vecWalls)
+		engine.AddWall(std::get<0>(w), std::get<1>(w), std::get<2>(w), std::get<3>(w));
+	
 
 	// These are just console only graphics resources
 	sprFont = new olcSprite(L"assets/javidx9_nesfont8x8.spr");
@@ -85,18 +86,6 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 		{
 			if (!engine.IsBattleStarted())
 			{				
-				/*ifstream data("battle.txt", ios::in | ios::binary);
-				vector<string> botFiles;
-				if (data.is_open())
-				{
-					while (!data.eof() && botFiles.size() < 8)
-					{
-						string s;
-						data >> s;
-						botFiles.push_back(s);
-					}
-				}*/
-
 				// Robots to load will be defined in BattlRoyale_Parameters
 				for (auto &s : BattleRoyale_Parameters::vecRobots)
 				{
@@ -167,8 +156,11 @@ bool OneLoneCoder_BattleRoyaleConsole::OnUserUpdate(float fElapsedTime)
 				else
 				{
 					DrawWireFrameModel(vecRobotModel, robot->status.posx, robot->status.posy, (float)rand(), 3.0f, robot->status.nColour, PIXEL_SOLID);
-					bDisplayError = true;
-					sErrorMessage = robot->status.sDebugOutput;
+					if (BattleRoyale_Parameters::bDebugMode)
+					{
+						bDisplayError = true;
+						sErrorMessage = robot->status.sDebugOutput;
+					}
 				}
 	}
 

@@ -10,6 +10,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cmath>
+#include <tuple>
 
 extern "C"
 {
@@ -40,10 +41,13 @@ public:
 	static int nBulletDamage;
 	static float fBulletSpeed;
 	static int nSelfDestructBullets;
+	static float fCollisionRadius;
+	static bool bAllowFriendlyFire;
 
 
 	static int nBattleMode;
 	static std::vector<std::pair<int, std::string>> vecRobots;
 	static std::vector<std::string> vecTeamNames;
+	static std::vector<std::tuple<float, float, float, float>> vecWalls;
 };
 

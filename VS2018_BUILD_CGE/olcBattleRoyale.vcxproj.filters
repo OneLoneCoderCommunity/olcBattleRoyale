@@ -60,4 +60,11 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Releases\robots\BrankBot.lua" />
+    <None Include="..\Releases\robots\JavidBot.lua" />
+    <None Include="..\Releases\robots\NullBot.lua" />
+    <None Include="..\Releases\BattleRoyaleRules.lua" />
+    <None Include="..\Releases\olcBRE.lua" />
+  </ItemGroup>
 </Project>

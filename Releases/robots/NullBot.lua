@@ -27,8 +27,8 @@ function Update()
 	end
 
 
-	me = GetStatus()
-	if me.health < 3 then
+	--me = GetStatus()
+	--if me.health < 3 then
 	--	SelfDestruct()
-	end
+	--end
 end

@@ -72,6 +72,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_CGE_GL_Big|Win32'">true</ExcludedFromBuild>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Releases\BattleRoyaleRules.lua" />
+    <None Include="..\Releases\olcBRE.lua" />
+    <None Include="..\Releases\robots\BrankBot.lua" />
+    <None Include="..\Releases\robots\JavidBot.lua" />
+    <None Include="..\Releases\robots\NullBot.lua" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{57B3E944-D224-4D2A-92F9-674070570C12}</ProjectGuid>

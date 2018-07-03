@@ -79,6 +79,7 @@ struct sBullet
 	float vx;
 	float vy;
 	int owner;
+	int team;
 	bool bDead = false;
 };
 
@@ -105,6 +106,7 @@ public:
 		bool shielded = false;
 		bool cloaked = false;
 		int team = 0;
+		float radius = BattleRoyale_Parameters::fCollisionRadius;
 		std::string sDebugOutput;
 	} status;
 
@@ -145,6 +147,11 @@ public:
 
 		std::vector<MAP_ENTRY> entries;
 	} map;
+
+	struct SIGNALS
+	{
+		bool b[4];
+	} signals;
 
 	enum STATES
 	{

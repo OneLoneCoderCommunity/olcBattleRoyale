@@ -43,11 +43,28 @@ BulletSpeed = 100.0
 -- Self Destruct Bullet count
 SelfDestructBullets = 10
 
+-- Size of collision circle around bot
+RobotHitRadius = 4.0
+
+-- Bots on same team can hurt each other
+AllowFriendlyFire = false
+
 -- DO NOT CHANGE ABOVE HERE =======================================
+
+Walls = {
+{0, 0, 200, 0},
+{0, 0, 0, 200},
+{0, 200, 100, 200},
+{100, 200, 100, 150},
+{100, 150, 150, 100},
+{150, 100, 200, 100},
+{200, 100, 200, 0}
+}
+
 
 
 -- Robots can be loaded into teams
 Teams = {}
-Teams["GoodGuys"] = {"javidbot.lua", "javidbot.lua"}
-Teams["BadGuys"] = {"nullbot.lua", "nullbot.lua"}
+Teams["GoodGuys"] = {"javidbot.lua", "javidbot.lua", "nullbot.lua", "nullbot.lua"}
+Teams["BadGuys"] = {"nullbot.lua", "nullbot.lua", "brankbot.lua", "brankbot.lua"}
 

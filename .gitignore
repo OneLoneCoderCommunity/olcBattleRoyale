@@ -8,3 +8,4 @@ VS2018_BUILD_CGE/BuildOutputs
 VS2018_BUILD_CGE/Debug
 VS2018_BUILD_CGE/Release
 *.user
+*.zip

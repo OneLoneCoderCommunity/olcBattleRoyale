@@ -87,35 +87,71 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 		if (bullet.x<0.0f || bullet.x > 200.0f || bullet.y <0.0f || bullet.y > 200.0f)
 			bullet.bDead = true;
 
+		// Taken from Programming Balls #2 video Bullets Vs Walls
+		for (auto wall : vecWalls)
+		{
+			// Check that line formed by velocity vector, intersects with line segment
+			float fLineX1 = wall.ex - wall.sx;
+			float fLineY1 = wall.ey - wall.sy;
+
+			float fLineX2 = bullet.x - wall.sx;
+			float fLineY2 = bullet.y - wall.sy;
+
+			float fEdgeLength = fLineX1 * fLineX1 + fLineY1 * fLineY1;
+
+			// This is nifty - It uses the DP of the line segment vs the line to the object, to work out
+			// how much of the segment is in the "shadow" of the object vector. The min and max clamp
+			// this to lie between 0 and the line segment length, which is then normalised. We can
+			// use this to calculate the closest point on the line segment
+			float t = std::max(0.0f, std::min(fEdgeLength, (fLineX1 * fLineX2 + fLineY1 * fLineY2))) / fEdgeLength;
+
+			// Which we do here
+			float fClosestPointX = wall.sx + t * fLineX1;
+			float fClosestPointY = wall.sy + t * fLineY1;
+
+			// And once we know the closest point, we can check if the ball has collided with the segment in the
+			// same way we check if two balls have collided
+			float fDistance = sqrtf((bullet.x - fClosestPointX)*(bullet.x - fClosestPointX) + (bullet.y - fClosestPointY)*(bullet.y - fClosestPointY));
+
+			if (fDistance <= 1.0f)
+			{
+				bullet.bDead = true;
+			}
+		}
+
 		// Has bullet hit a robot?
 		for (auto &robot : vecRobots)
-		{
+		{			
 			// Ignore if bullet was fired by owner of bullet (can't shoot yourself!)
 			if (bullet.owner != robot->status.id)
 			{
 				// Ignore if robot has shields raised
 				if (!robot->status.shielded)
 				{
-					if (powf(bullet.x - robot->status.posx, 2.0f) + powf(bullet.y - robot->status.posy, 2.0f) <= 16.0f)
+					if (powf(bullet.x - robot->status.posx, 2.0f) + powf(bullet.y - robot->status.posy, 2.0f) <= powf(BattleRoyale_Parameters::fCollisionRadius, 2.0f))
 					{
-						// Bullet has hit robot
-						robot->muxUpdatingSensors.lock();
-						if (robot->status.health > 0)
+						// If friendly fire is not allowed, and robots are on same team then ignore
+						if (robot->status.team != bullet.team || BattleRoyale_Parameters::bAllowFriendlyFire)
 						{
-							robot->status.health -= BattleRoyale_Parameters::nBulletDamage;
-							if (robot->status.health <= 0)
+							// Bullet has hit robot
+							robot->muxUpdatingSensors.lock();
+							if (robot->status.health > 0)
 							{
-								robot->status.health = 0;
-								listAnnouncements.push_back({ robot->status.id, sAnnouncement::ANNOUNCE_ELIMINATION });
+								robot->status.health -= BattleRoyale_Parameters::nBulletDamage;
+								if (robot->status.health <= 0)
+								{
+									robot->status.health = 0;
+									listAnnouncements.push_back({ robot->status.id, sAnnouncement::ANNOUNCE_ELIMINATION });
+								}
 							}
-						}
-						robot->muxUpdatingSensors.unlock();
+							robot->muxUpdatingSensors.unlock();
 
-						// Kill Bullet
-						bullet.bDead = true;
+							// Kill Bullet
+							bullet.bDead = true;
+						}
 					}
 				}
-			}
+			}			
 		}
 	}
 
@@ -181,7 +217,7 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 				robot->wall.e = std::min(robot->wall.e, d);
 			}
 
-			// Check for enemy proximity
+			// Check for enemy proximity, first set to maximum range
 			robot->enemy.n = 2000.0f;
 			robot->enemy.s = 2000.0f;
 			robot->enemy.w = 2000.0f;
@@ -241,16 +277,44 @@ void OneLoneCoder_BattleRoyale::Update(float fElapsedTime)
 			// Update the robots mechanics
 			robot->UpdateStateMachine(fElapsedTime, this);
 
-			// Collision Handle
-			if (robot->status.posx < 0.0f) robot->status.posx = 0.5f;
-			if (robot->status.posx >= nArenaWidth) robot->status.posx = (float)nArenaWidth - 0.5f;
-			if (robot->status.posy < 0.0f) robot->status.posy = 0.5f;
-			if (robot->status.posy >= nArenaHeight) robot->status.posy = (float)nArenaHeight - 0.5f;
+			// Collision Handle Robot Vs Wall
 
-			//DrawLine(robot->status.posx, robot->status.posy, robot->wall.n * cosf(robot->status.angle) + robot->status.posx, robot->wall.n * sinf(robot->status.angle) + robot->status.posy, PIXEL_SOLID, FG_RED);
-			//DrawLine(robot->status.posx, robot->status.posy, robot->wall.s * cosf(robot->status.angle + 3.14159f) + robot->status.posx, robot->wall.s * sinf(robot->status.angle + 3.14159f) + robot->status.posy, PIXEL_SOLID, FG_RED);
-			//DrawLine(robot->status.posx, robot->status.posy, robot->wall.w * cosf(robot->status.angle - (3.14159f / 2.0f)) + robot->status.posx, robot->wall.w * sinf(robot->status.angle - (3.14159f / 2.0f)) + robot->status.posy, PIXEL_SOLID, FG_RED);
-			//DrawLine(robot->status.posx, robot->status.posy, robot->wall.e * cosf(robot->status.angle + (3.14159f / 2.0f)) + robot->status.posx, robot->wall.e * sinf(robot->status.angle + (3.14159f / 2.0f)) + robot->status.posy, PIXEL_SOLID, FG_RED);
+			// Taken from Programming Balls #2 video
+			for (auto wall : vecWalls)
+			{
+				// Check that line formed by velocity vector, intersects with line segment
+				float fLineX1 = wall.ex - wall.sx;
+				float fLineY1 = wall.ey - wall.sy;
+
+				float fLineX2 = robot->status.posx - wall.sx;
+				float fLineY2 = robot->status.posy - wall.sy;
+
+				float fEdgeLength = fLineX1 * fLineX1 + fLineY1 * fLineY1;
+
+				// This is nifty - It uses the DP of the line segment vs the line to the object, to work out
+				// how much of the segment is in the "shadow" of the object vector. The min and max clamp
+				// this to lie between 0 and the line segment length, which is then normalised. We can
+				// use this to calculate the closest point on the line segment
+				float t = std::max(0.0f, std::min(fEdgeLength, (fLineX1 * fLineX2 + fLineY1 * fLineY2))) / fEdgeLength;
+
+				// Which we do here
+				float fClosestPointX = wall.sx + t * fLineX1;
+				float fClosestPointY = wall.sy + t * fLineY1;
+
+				// And once we know the closest point, we can check if the ball has collided with the segment in the
+				// same way we check if two balls have collided
+				float fDistance = sqrtf((robot->status.posx - fClosestPointX)*(robot->status.posx - fClosestPointX) + (robot->status.posy - fClosestPointY)*(robot->status.posy - fClosestPointY));
+
+				if (fDistance <= (robot->status.radius))
+				{
+					// Calculate displacement required
+					float fOverlap = -0.5f * (robot->status.radius);
+
+					// Displace Current Ball away from collision
+					robot->status.posx -= fOverlap * (robot->status.posx - fClosestPointX) / fDistance;
+					robot->status.posy -= fOverlap * (robot->status.posy - fClosestPointY) / fDistance;
+				}
+			}
 		}
 	}
 }

@@ -38,7 +38,7 @@ function Update()
 	i = 0
 	while i < count and me.team == map[i].team do
 		i = i + 1
-	end
+	end 
 
 	if battle.enemies > 0 then
 		TurnToAngle(math.atan2(map[i].y-me.y, map[i].x-me.x))
